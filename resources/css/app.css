@@ -1,0 +1,236 @@
+@import url('https://fonts.bunny.net/css?family=fraunces:400,500,600,700,800,900|ibm-plex-sans:300,400,500,600,700|ibm-plex-mono:400,500,600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --paper: #FAF8F3;
+    --paper-2: #F3EFE6;
+    --ink: #111110;
+    --ink-2: #2A2A27;
+    --ink-3: #5C5C57;
+    --ink-4: #8F8F88;
+    --rule: #DED9CC;
+    --rule-soft: #EAE5D8;
+    --surface: #FFFFFF;
+    --amber: #B8732F;
+    --amber-dark: #8B5520;
+    --amber-soft: #F2E5D0;
+    --forest: #1F4D3A;
+    --forest-soft: #D8E5DD;
+    --clay: #A8382F;
+    --clay-soft: #F2D9D5;
+    --gold: #C9A227;
+    --gold-soft: #F4EBC4;
+}
+
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    background-color: var(--paper);
+    color: var(--ink);
+    font-feature-settings: "ss01", "cv05", "cv11";
+    background-image:
+        radial-gradient(circle at 1px 1px, rgba(17,17,16,0.025) 1px, transparent 0);
+    background-size: 24px 24px;
+}
+
+.font-display {
+    font-family: 'Fraunces', ui-serif, Georgia, serif;
+    font-feature-settings: "ss01";
+    letter-spacing: -0.015em;
+}
+
+.font-mono-num {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "zero";
+}
+
+.tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+}
+
+.rule { border-color: var(--rule); }
+.rule-soft { border-color: var(--rule-soft); }
+
+.bg-paper { background-color: var(--paper); }
+.bg-paper-2 { background-color: var(--paper-2); }
+.bg-surface { background-color: var(--surface); }
+.bg-ink { background-color: var(--ink); }
+
+.text-ink { color: var(--ink); }
+.text-ink-2 { color: var(--ink-2); }
+.text-ink-3 { color: var(--ink-3); }
+.text-ink-4 { color: var(--ink-4); }
+
+.text-amber-ink { color: var(--amber); }
+.bg-amber-ink { background-color: var(--amber); }
+.border-amber-ink { border-color: var(--amber); }
+.bg-amber-soft { background-color: var(--amber-soft); }
+
+.text-forest-ink { color: var(--forest); }
+.bg-forest-ink { background-color: var(--forest); }
+.bg-forest-soft { background-color: var(--forest-soft); }
+
+.text-clay-ink { color: var(--clay); }
+.bg-clay-ink { background-color: var(--clay); }
+.bg-clay-soft { background-color: var(--clay-soft); }
+
+.bg-gold-soft { background-color: var(--gold-soft); }
+.text-gold-ink { color: #8B6F15; }
+
+.card-ledger {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+}
+
+.divide-rule > * + * {
+    border-top: 1px solid var(--rule-soft);
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 500;
+    font-size: 0.875rem;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+}
+.btn-primary:hover { background: var(--amber); }
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    background: transparent;
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 0.875rem;
+    border-radius: 3px;
+    border: 1px solid var(--rule);
+    transition: all 0.15s ease;
+}
+.btn-secondary:hover { border-color: var(--ink); background: var(--paper); }
+
+.btn-amber {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    background: var(--amber);
+    color: white;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+}
+.btn-amber:hover { background: var(--amber-dark); }
+
+.input-ledger {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    color: var(--ink);
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input-ledger:focus {
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px rgba(17,17,16,0.06);
+}
+.input-ledger::placeholder { color: var(--ink-4); }
+
+.label-ledger {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 0.35rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+}
+.badge-amber { color: var(--amber); background: var(--amber-soft); border-color: var(--amber); }
+.badge-forest { color: var(--forest); background: var(--forest-soft); border-color: var(--forest); }
+.badge-clay { color: var(--clay); background: var(--clay-soft); border-color: var(--clay); }
+.badge-gold { color: var(--gold); background: var(--gold-soft); border-color: var(--gold); }
+.badge-ink { color: var(--ink); background: var(--paper-2); border-color: var(--rule); }
+
+.kicker {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+}
+
+.rule-divider {
+    height: 1px;
+    background: var(--rule);
+    border: none;
+}
+
+.table-ledger {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+.table-ledger thead th {
+    text-align: left;
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper-2);
+}
+.table-ledger tbody td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--rule-soft);
+    color: var(--ink-2);
+}
+.table-ledger tbody tr:hover td { background: var(--paper); }
+.table-ledger tbody tr:last-child td { border-bottom: 0; }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.5s ease forwards; opacity: 0; }
+.fade-up-1 { animation-delay: 0.05s; }
+.fade-up-2 { animation-delay: 0.12s; }
+.fade-up-3 { animation-delay: 0.2s; }
+.fade-up-4 { animation-delay: 0.28s; }
+
+[x-cloak] { display: none !important; }
