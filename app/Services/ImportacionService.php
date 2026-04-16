@@ -83,12 +83,14 @@ class ImportacionService
     {
         $datos = [];
 
+        $rutaAbsoluta = \Storage::disk('local')->path($ruta);
+
         if ($tipoArchivo === 'excel') {
-            $datos = Excel::toArray([], storage_path('app/' . $ruta));
+            $datos = Excel::toArray([], $rutaAbsoluta);
             $datos = $datos[0]; // Primera hoja
         } else {
             // Procesar CSV
-            $contenido = file_get_contents(storage_path('app/' . $ruta));
+            $contenido = file_get_contents($rutaAbsoluta);
             $lineas = explode("\n", $contenido);
             
             // Asumir que la primera línea son encabezados
