@@ -218,3 +218,17 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 chmod -R 775 storage bootstrap/cache
+
+
+Ver últimas 80 líneas del log:
+
+
+tail -n 80 storage/logs/laravel.log
+Limpiar el log (dejarlo vacío):
+
+
+> storage/logs/laravel.log
+Ver en tiempo real (útil mientras haces clicks en la web):
+
+
+tail -f storage/logs/laravel.log
