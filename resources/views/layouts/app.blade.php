@@ -111,6 +111,27 @@
         </div>
     @endif
 
+    @if(session('warning'))
+        <div class="max-w-[1400px] mx-auto px-5 lg:px-8 mt-5">
+            <div class="bg-amber-50 border-l-4 border-amber-500 pl-5 pr-4 py-3">
+                <div class="flex items-center gap-4">
+                    <span class="kicker" style="color: #b45309;">Atención</span>
+                    <p class="flex-1 text-sm text-ink">{{ session('warning') }}</p>
+                </div>
+                @if(session('errores_importacion') && count(session('errores_importacion')) > 0)
+                    <div class="mt-3 pl-2">
+                        <p class="text-xs font-semibold text-ink-2 mb-1.5">Detalle de errores:</p>
+                        <ul class="text-sm text-ink-2 list-disc list-inside space-y-1 max-h-48 overflow-y-auto">
+                            @foreach(session('errores_importacion') as $err)
+                                <li>{{ $err }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
+
     @if($errors->any())
         <div class="max-w-[1400px] mx-auto px-5 lg:px-8 mt-5">
             <div class="bg-clay-soft border-l-4 border-clay-ink pl-5 pr-4 py-3">

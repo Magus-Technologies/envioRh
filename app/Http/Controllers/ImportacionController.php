@@ -45,9 +45,13 @@ class ImportacionController extends Controller
             );
 
             $mensaje = "Se importaron {$resultado['validos']} registros de {$resultado['total']} total";
-            
+
             if ($resultado['invalidos'] > 0) {
                 $mensaje .= ". {$resultado['invalidos']} tuvieron errores.";
+
+                return redirect()->route('lotes.show', $loteId)
+                                 ->with('warning', $mensaje)
+                                 ->with('errores_importacion', $resultado['errores']);
             }
 
             return redirect()->route('lotes.show', $loteId)
@@ -86,8 +90,7 @@ class ImportacionController extends Controller
                 'Monto',
                 'Fecha Emisión (YYYY-MM-DD)',
                 'Fecha Vencimiento (YYYY-MM-DD)',
-                'Moneda (PEN/USD)',
-                'Número Continuación (opcional)'
+                'Moneda (PEN/USD)'
             ]
         ], null, 'A1');
 
@@ -104,13 +107,12 @@ class ImportacionController extends Controller
                 1500.00,
                 '2026-04-01',
                 '2026-04-30',
-                'PEN',
-                'CONT-2026-001'
+                'PEN'
             ]
         ], null, 'A2');
 
         // Estilo encabezados
-        foreach (range('A', 'L') as $col) {
+        foreach (range('A', 'K') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
