@@ -26,8 +26,9 @@ class ReciboController extends Controller
     {
         $lote = LoteEmision::findOrFail($loteId);
         $clientes = Cliente::where('estado', 'activo')->orderBy('nombre_razon_social')->get();
+        $emisorDefault = config('emisor.default');
 
-        return view('recibos.create', compact('lote', 'clientes'));
+        return view('recibos.create', compact('lote', 'clientes', 'emisorDefault'));
     }
 
     /**

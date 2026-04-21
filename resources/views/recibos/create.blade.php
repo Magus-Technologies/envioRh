@@ -29,27 +29,53 @@
         <form method="POST" action="{{ route('recibos.store', $lote->id) }}" class="lg:col-span-8 fade-up fade-up-2">
             @csrf
 
-            <div class="card-ledger mb-6">
-                <div class="p-6 border-b rule-soft">
-                    <h2 class="font-display text-xl text-ink">Emisor</h2>
-                    <p class="text-xs text-ink-3 mt-1">Quién emite el recibo (profesional independiente).</p>
+            <div class="card-ledger mb-6" x-data="emisorLookup({
+                tipo: '{{ old('emisor_tipo_documento', $emisorDefault['tipo_documento'] ?: 'DNI') }}',
+                numero: '{{ old('emisor_numero_documento', $emisorDefault['numero_documento']) }}',
+                nombre: @js(old('emisor_nombre', $emisorDefault['nombre']))
+            })">
+                <div class="p-6 border-b rule-soft flex items-center justify-between">
+                    <div>
+                        <h2 class="font-display text-xl text-ink">Emisor</h2>
+                        <p class="text-xs text-ink-3 mt-1">Quién emite el recibo (profesional independiente). Pre-cargado por defecto.</p>
+                    </div>
+                    <div class="flex items-center gap-3 text-[11px] uppercase tracking-wider" x-show="status" x-transition>
+                        <span x-show="loading" class="flex items-center gap-2 text-amber-ink">
+                            <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2.5" opacity="0.25"/><path stroke-linecap="round" stroke-width="2.5" d="M21 12a9 9 0 0 0-9-9"/></svg>
+                            Consultando…
+                        </span>
+                        <span x-show="status === 'ok' && !loading" class="text-forest-ink">✓ Datos obtenidos</span>
+                        <span x-show="status === 'error' && !loading" class="text-clay-ink" x-text="errorMsg"></span>
+                    </div>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
                         <label class="label-ledger">Tipo documento</label>
-                        <select name="emisor_tipo_documento" class="input-ledger">
+                        <select name="emisor_tipo_documento" class="input-ledger" x-model="tipo">
                             @foreach(['DNI','CE','Pasaporte'] as $td)
-                                <option value="{{ $td }}" {{ old('emisor_tipo_documento', 'DNI') === $td ? 'selected' : '' }}>{{ $td }}</option>
+                                <option value="{{ $td }}">{{ $td }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="label-ledger">Número</label>
-                        <input type="text" name="emisor_numero_documento" value="{{ old('emisor_numero_documento') }}" required maxlength="20" class="input-ledger font-mono-num">
+                        <label class="label-ledger flex items-center justify-between">
+                            <span>Número</span>
+                            <button type="button"
+                                    @click="buscar()"
+                                    x-show="tipo === 'DNI' && numero.length === 8"
+                                    class="text-[10px] uppercase tracking-wider text-amber-ink hover:text-ink">
+                                Consultar
+                            </button>
+                        </label>
+                        <input type="text" name="emisor_numero_documento" required maxlength="20"
+                               class="input-ledger font-mono-num"
+                               x-model="numero"
+                               @blur="autoLookup()"
+                               @keyup.enter.prevent="buscar()">
                     </div>
                     <div>
                         <label class="label-ledger">Nombre</label>
-                        <input type="text" name="emisor_nombre" value="{{ old('emisor_nombre') }}" required maxlength="255" class="input-ledger">
+                        <input type="text" name="emisor_nombre" required maxlength="255" class="input-ledger" x-model="nombre">
                     </div>
                 </div>
             </div>
@@ -120,4 +146,36 @@
         </form>
     </div>
 </div>
+
+<script>
+    function emisorLookup(init) {
+        return {
+            tipo: init.tipo,
+            numero: init.numero,
+            nombre: init.nombre,
+            loading: false,
+            status: '',
+            errorMsg: '',
+            autoLookup() {
+                if (this.tipo === 'DNI' && this.numero.length === 8 && !this.nombre) this.buscar();
+            },
+            async buscar() {
+                if (this.loading) return;
+                if (this.tipo !== 'DNI') return;
+                this.loading = true;
+                this.status = '';
+                this.errorMsg = '';
+                const res = await window.consultarDocumento(this.numero);
+                this.loading = false;
+                if (!res.success) {
+                    this.status = 'error';
+                    this.errorMsg = res.message;
+                    return;
+                }
+                this.nombre = res.data.nombreCompleto;
+                this.status = 'ok';
+            }
+        };
+    }
+</script>
 @endsection
