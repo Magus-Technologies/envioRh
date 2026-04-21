@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::get('lotes/{id}/descargar', [LoteController::class, 'descargarArchivo'])->name('lotes.descargar');
 
     // Rutas de recibos
+    Route::get('lotes/{lote_id}/recibos/create', [ReciboController::class, 'create'])->name('recibos.create');
     Route::post('lotes/{lote_id}/recibos', [ReciboController::class, 'store'])->name('recibos.store');
     Route::get('recibos/{id}/edit', [ReciboController::class, 'edit'])->name('recibos.edit');
     Route::put('recibos/{id}', [ReciboController::class, 'update'])->name('recibos.update');

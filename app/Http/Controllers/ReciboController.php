@@ -20,6 +20,17 @@ class ReciboController extends Controller
     }
 
     /**
+     * Mostrar formulario para crear recibo manualmente en un lote
+     */
+    public function create(int $loteId)
+    {
+        $lote = LoteEmision::findOrFail($loteId);
+        $clientes = Cliente::where('estado', 'activo')->orderBy('nombre_razon_social')->get();
+
+        return view('recibos.create', compact('lote', 'clientes'));
+    }
+
+    /**
      * Almacenar nuevo recibo en un lote
      */
     public function store(Request $request, int $loteId)
@@ -84,7 +95,10 @@ class ReciboController extends Controller
             'descripcion' => "Recibo #{$recibo->id} agregado al lote",
         ]);
 
-        return back()->with('success', 'Recibo agregado exitosamente');
+        $lote->recalcularTotales();
+
+        return redirect()->route('lotes.show', $loteId)
+                         ->with('success', 'Recibo agregado exitosamente');
     }
 
     /**
@@ -154,6 +168,8 @@ class ReciboController extends Controller
             'descripcion' => "Recibo #{$recibo->id} editado",
         ]);
 
+        LoteEmision::find($recibo->lote_id)?->recalcularTotales();
+
         return redirect()->route('lotes.show', $recibo->lote_id)
                          ->with('success', 'Recibo actualizado exitosamente');
     }
@@ -179,6 +195,8 @@ class ReciboController extends Controller
             'accion' => 'recibo_editado',
             'descripcion' => "Recibo #{$id} eliminado",
         ]);
+
+        LoteEmision::find($loteId)?->recalcularTotales();
 
         return back()->with('success', 'Recibo eliminado exitosamente');
     }

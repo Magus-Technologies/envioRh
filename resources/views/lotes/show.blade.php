@@ -22,6 +22,12 @@
             <p class="mt-3 text-ink-3">{{ $lote->descripcion ?: 'Sin descripción' }}</p>
         </div>
         <div class="lg:col-span-5 flex lg:justify-end flex-wrap gap-2">
+            @if(in_array($lote->estado, ['pendiente', 'generado']))
+                <a href="{{ route('recibos.create', $lote->id) }}" class="btn-primary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Nuevo recibo
+                </a>
+            @endif
             @if($lote->estado === 'pendiente')
                 <a href="{{ route('importacion.create', $lote->id) }}" class="btn-secondary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -147,7 +153,10 @@
         @else
             <div class="py-16 text-center">
                 <p class="font-display italic text-2xl text-ink-3">Aún no hay recibos.</p>
-                <a href="{{ route('importacion.create', $lote->id) }}" class="btn-primary mt-5">Importar recibos</a>
+                <div class="flex items-center justify-center gap-3 mt-5">
+                    <a href="{{ route('recibos.create', $lote->id) }}" class="btn-primary">+ Nuevo recibo</a>
+                    <a href="{{ route('importacion.create', $lote->id) }}" class="btn-secondary">Importar Excel</a>
+                </div>
             </div>
         @endif
     </div>

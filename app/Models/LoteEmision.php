@@ -68,4 +68,18 @@ class LoteEmision extends Model
         return $query->where('periodo_mes', $mes)
                      ->where('periodo_anio', $anio);
     }
+
+    public function recalcularTotales(): void
+    {
+        $t = Recibo::where('lote_id', $this->id)
+            ->selectRaw('COUNT(*) as total, COALESCE(SUM(monto_bruto),0) as bruto, COALESCE(SUM(monto_retencion),0) as retencion, COALESCE(SUM(monto_neto),0) as neto')
+            ->first();
+
+        $this->update([
+            'total_recibos' => $t->total ?? 0,
+            'monto_total' => $t->bruto ?? 0,
+            'retencion_total' => $t->retencion ?? 0,
+            'neto_total' => $t->neto ?? 0,
+        ]);
+    }
 }
