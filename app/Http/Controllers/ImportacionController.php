@@ -111,7 +111,47 @@ class ImportacionController extends Controller
             ]
         ], null, 'A2');
 
-        // Estilo encabezados
+        // Estilo encabezados: fondo marrón oscuro, texto blanco, negrita
+        $sheet->getStyle('A1:K1')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+                'size' => 11,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '6B3410'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => '4A2409'],
+                ],
+            ],
+        ]);
+
+        $sheet->getRowDimension(1)->setRowHeight(38);
+
+        // Estilo fila de ejemplo: fondo crema claro
+        $sheet->getStyle('A2:K2')->applyFromArray([
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FBF5EC'],
+            ],
+            'font' => [
+                'italic' => true,
+                'color' => ['rgb' => '6B5D4F'],
+            ],
+        ]);
+
+        // Congelar fila de encabezados
+        $sheet->freezePane('A2');
+
         foreach (range('A', 'K') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
