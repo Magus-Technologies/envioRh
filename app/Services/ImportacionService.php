@@ -168,7 +168,7 @@ class ImportacionService
                     );
 
                     // Calcular retención
-                    $fechaEmision = Carbon::parse($parseado['fecha_emision']);
+                    $fechaEmision = Carbon::createFromFormat('Y-m-d', $parseado['fecha_emision'])->startOfDay();
                     $retencion = $this->retencionService->calcularRetencion(
                         $parseado['documento_emisor'],
                         $fechaEmision,
@@ -184,7 +184,7 @@ class ImportacionService
                         'emisor_nombre' => $parseado['nombre_emisor'] ?? '',
                         'descripcion_servicio' => $parseado['descripcion'],
                         'fecha_emision' => $fechaEmision,
-                        'fecha_vencimiento' => $parseado['fecha_vencimiento'] ? Carbon::parse($parseado['fecha_vencimiento']) : null,
+                        'fecha_vencimiento' => $parseado['fecha_vencimiento'] ? Carbon::createFromFormat('Y-m-d', $parseado['fecha_vencimiento'])->startOfDay() : null,
                         'monto_bruto' => $parseado['monto'],
                         'aplica_retencion' => $retencion['aplica_retencion'],
                         'porcentaje_retencion' => $this->retencionService->getPorcentajeRetencion(),
@@ -245,8 +245,8 @@ class ImportacionService
             'nombre_cliente' => $this->limpiarTexto($fila[5] ?? ''),
             'descripcion' => $this->limpiarTexto($fila[6] ?? ''),
             'monto' => $this->parsearMonto($fila[7] ?? '0'),
-            'fecha_emision' => $this->parsearFecha($fila[8] ?? date('Y-m-d')),
-            'fecha_vencimiento' => isset($fila[9]) ? $this->parsearFecha($fila[9]) : null,
+            'fecha_emision' => $this->parsearFecha($fila[8] ?? null),
+            'fecha_vencimiento' => $this->parsearFecha($fila[9] ?? null),
             'moneda' => $this->limpiarTexto($fila[10] ?? 'PEN'),
             'numero_continuacion' => $this->limpiarTexto($fila[11] ?? null),
         ];
@@ -275,6 +275,10 @@ class ImportacionService
             $errores[] = "Fila #{$num}: Monto debe ser mayor a 0";
         }
 
+        if (empty($datos['fecha_emision'])) {
+            $errores[] = "Fila #{$num}: Fecha de emisión vacía o con formato inválido (usa YYYY-MM-DD, por ejemplo 2026-04-15)";
+        }
+
         return $errores;
     }
 
@@ -298,21 +302,41 @@ class ImportacionService
     }
 
     /**
-     * Parsear fecha
+     * Parsear fecha. Devuelve 'Y-m-d' o null si no se pudo interpretar.
      */
-    protected function parsearFecha(string $fecha): string
+    protected function parsearFecha($fecha): ?string
     {
-        // Intentar varios formatos
-        $formatos = ['Y-m-d', 'd/m/Y', 'd-m-Y', 'm/d/Y', 'Y/m/d'];
-        
+        if ($fecha === null || $fecha === '') {
+            return null;
+        }
+
+        // Fecha numérica de Excel (serial date)
+        if (is_numeric($fecha)) {
+            try {
+                $dt = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $fecha);
+                return $dt->format('Y-m-d');
+            } catch (\Throwable $e) {
+                return null;
+            }
+        }
+
+        $fecha = trim((string) $fecha);
+
+        $formatos = ['Y-m-d', 'd/m/Y', 'd-m-Y', 'm/d/Y', 'Y/m/d', 'd/m/y'];
+
         foreach ($formatos as $formato) {
-            $date = Carbon::createFromFormat($formato, $fecha);
-            if ($date) {
+            $date = \DateTime::createFromFormat($formato, $fecha);
+            $errors = \DateTime::getLastErrors();
+            if ($date && (empty($errors['warning_count']) && empty($errors['error_count']))) {
                 return $date->format('Y-m-d');
             }
         }
 
-        // Si no se pudo parsear, usar fecha actual
-        return date('Y-m-d');
+        // Último intento: Carbon::parse genérico
+        try {
+            return Carbon::parse($fecha)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }
