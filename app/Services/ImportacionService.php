@@ -206,8 +206,11 @@ class ImportacionService
                     }
 
                     $resultado['validos']++;
+                } catch (\Illuminate\Database\QueryException $e) {
+                    $resultado['errores'][] = "Fila #{$num}: " . $this->traducirErrorSql($e);
+                    $resultado['invalidos']++;
                 } catch (\Exception $e) {
-                    $resultado['errores'][] = "Fila #{$num}: " . $e->getMessage();
+                    $resultado['errores'][] = "Fila #{$num}: No se pudo guardar el recibo. Revisa los datos de esta fila.";
                     $resultado['invalidos']++;
                 }
             }
@@ -279,6 +282,16 @@ class ImportacionService
             $errores[] = "Fila #{$num}: Fecha de emisión vacía o con formato inválido (usa YYYY-MM-DD, por ejemplo 2026-04-15)";
         }
 
+        $tiposEmisorValidos = ['DNI', 'CE', 'Pasaporte'];
+        if (!empty($datos['tipo_documento_emisor']) && !in_array($datos['tipo_documento_emisor'], $tiposEmisorValidos, true)) {
+            $errores[] = "Fila #{$num}: Tipo de documento del emisor inválido (\"{$datos['tipo_documento_emisor']}\"). El emisor es una persona natural: usa DNI, CE o Pasaporte";
+        }
+
+        $tiposClienteValidos = ['DNI', 'RUC', 'CE', 'Pasaporte'];
+        if (!empty($datos['tipo_documento_cliente']) && !in_array($datos['tipo_documento_cliente'], $tiposClienteValidos, true)) {
+            $errores[] = "Fila #{$num}: Tipo de documento del cliente inválido (\"{$datos['tipo_documento_cliente']}\"). Usa DNI, RUC, CE o Pasaporte";
+        }
+
         return $errores;
     }
 
@@ -338,5 +351,47 @@ class ImportacionService
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    /**
+     * Traduce un error SQL a mensaje claro en español
+     */
+    protected function traducirErrorSql(\Illuminate\Database\QueryException $e): string
+    {
+        $msg = $e->getMessage();
+
+        if (str_contains($msg, 'Data truncated for column')) {
+            preg_match("/column '([^']+)'/", $msg, $m);
+            $campo = $m[1] ?? 'un campo';
+            return "El valor del campo \"{$campo}\" no es válido. Verifica que uses solo los valores permitidos (ej: DNI/CE/Pasaporte para emisor, DNI/RUC para cliente, PEN/USD para moneda).";
+        }
+
+        if (str_contains($msg, 'Data too long for column')) {
+            preg_match("/column '([^']+)'/", $msg, $m);
+            $campo = $m[1] ?? 'un campo';
+            return "El texto del campo \"{$campo}\" es demasiado largo. Acórtalo e intenta de nuevo.";
+        }
+
+        if (str_contains($msg, 'cannot be null') || str_contains($msg, "doesn't have a default value")) {
+            preg_match("/[Cc]olumn '([^']+)'/", $msg, $m);
+            $campo = $m[1] ?? 'un campo obligatorio';
+            return "Falta completar el campo \"{$campo}\".";
+        }
+
+        if (str_contains($msg, 'Duplicate entry')) {
+            return "Este recibo ya existe en la base de datos (registro duplicado).";
+        }
+
+        if (str_contains($msg, 'Incorrect date value') || str_contains($msg, 'Incorrect datetime value')) {
+            return "Una de las fechas de esta fila no tiene un formato válido. Usa YYYY-MM-DD (ej: 2026-04-15).";
+        }
+
+        if (str_contains($msg, 'Out of range value')) {
+            preg_match("/column '([^']+)'/", $msg, $m);
+            $campo = $m[1] ?? 'un campo numérico';
+            return "El valor del campo \"{$campo}\" está fuera del rango permitido.";
+        }
+
+        return "No se pudo guardar el recibo. Revisa los datos de esta fila.";
     }
 }
