@@ -239,11 +239,30 @@ class ImportacionService
 
             DB::commit();
 
+            $this->recalcularTotalesLote($loteId);
+
             return $resultado;
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Recalcular totales del lote (recibos, bruto, retención, neto)
+     */
+    protected function recalcularTotalesLote(int $loteId): void
+    {
+        $totales = Recibo::where('lote_id', $loteId)
+            ->selectRaw('COUNT(*) as total, COALESCE(SUM(monto_bruto),0) as bruto, COALESCE(SUM(monto_retencion),0) as retencion, COALESCE(SUM(monto_neto),0) as neto')
+            ->first();
+
+        LoteEmision::where('id', $loteId)->update([
+            'total_recibos' => $totales->total ?? 0,
+            'monto_total' => $totales->bruto ?? 0,
+            'retencion_total' => $totales->retencion ?? 0,
+            'neto_total' => $totales->neto ?? 0,
+        ]);
     }
 
     /**
