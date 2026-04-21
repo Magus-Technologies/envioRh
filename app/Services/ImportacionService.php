@@ -115,8 +115,30 @@ class ImportacionService
      */
     protected function esEncabezado(array $fila): bool
     {
-        $primerValor = strtolower((string) $fila[0]);
-        return in_array($primerValor, ['tipo', 'documento', 'cliente', 'descripcion', 'monto']);
+        $primerValor = strtolower(trim((string) ($fila[0] ?? '')));
+
+        if ($primerValor === '') {
+            return false;
+        }
+
+        // Palabras clave que solo aparecen en encabezados
+        $keywords = ['tipo', 'documento', 'cliente', 'descripcion', 'descripción', 'monto', 'fecha', 'moneda', 'emisor', 'nombre'];
+
+        foreach ($keywords as $k) {
+            if (str_contains($primerValor, $k)) {
+                return true;
+            }
+        }
+
+        // Si la celda del monto (índice 7) no es numérica, probablemente es encabezado
+        if (isset($fila[7]) && !is_numeric(trim((string) $fila[7]))) {
+            $montoCol = strtolower(trim((string) $fila[7]));
+            if (str_contains($montoCol, 'monto') || str_contains($montoCol, 'total')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
