@@ -184,6 +184,31 @@ class ReciboController extends Controller
     }
 
     /**
+     * Marcar recibo como emitido y registrar el N° asignado por SUNAT
+     */
+    public function marcarEmitido(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'numero_recibo_sunat' => 'required|string|max:50',
+        ]);
+
+        $recibo = Recibo::findOrFail($id);
+
+        $recibo->update([
+            'numero_recibo_sunat' => trim($validated['numero_recibo_sunat']),
+            'estado' => 'emitido',
+        ]);
+
+        HistorialEmision::create([
+            'lote_id' => $recibo->lote_id,
+            'accion' => 'recibo_emitido',
+            'descripcion' => "Recibo #{$id} marcado como emitido. N° SUNAT: {$validated['numero_recibo_sunat']}",
+        ]);
+
+        return back()->with('success', "Recibo marcado como emitido (N° {$validated['numero_recibo_sunat']})");
+    }
+
+    /**
      * Calcular retención (API)
      */
     public function calcularRetencion(Request $request)

@@ -105,24 +105,17 @@ class LoteController extends Controller
         }
 
         try {
-            $formato = $request->input('formato', 'txt');
-            
-            if ($formato === 'excel') {
-                $ruta = $this->sunatFileService->generarArchivoExcel($lote);
-            } else {
-                $ruta = $this->sunatFileService->generarArchivoTXT($lote);
-            }
+            $ruta = $this->sunatFileService->generarArchivoExcel($lote);
 
-            // Registrar en historial
             HistorialEmision::create([
                 'lote_id' => $id,
                 'accion' => 'archivo_generado',
-                'descripcion' => "Archivo generado: {$ruta}",
+                'descripcion' => "Excel masivo generado: {$ruta}",
             ]);
 
-            return back()->with('success', 'Archivo generado exitosamente');
+            return redirect()->route('lotes.descargar', $id);
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al generar archivo: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar Excel: ' . $e->getMessage());
         }
     }
 

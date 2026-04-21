@@ -77,26 +77,48 @@ Cada uno tiene botón **Exportar Excel** arriba a la derecha.
 
 ---
 
-## 4. Probar contra SUNAT (lo real)
+## 4. Emitir los recibos en SUNAT SOL
 
-SUNAT **no tiene ambiente de pruebas** para Recibos por Honorarios. Se prueba directo con tu **Clave SOL** real. Por eso lo importante es validar internamente antes.
+**Importante:** SUNAT no tiene carga masiva pública para emitir recibos por honorarios. Cada recibo se emite uno por uno en SOL. envíoRH **te genera un Excel de apoyo** para que no tengas que recordar nada.
 
-**Pasos:**
+### 4.1 — Exportar el Excel masivo del lote
 
-1. Desde el lote en envíoRH, click en **Generar archivo SUNAT** y descarga el archivo.
-2. Entra a https://www.sunat.gob.pe/ con tu Clave SOL.
-3. Menú **Planilla Electrónica → PLAME → Presentación**.
-4. Elige el período (mes/año).
-5. En la sección **4ta Categoría (recibos por honorarios)** busca la opción **Importar desde archivo**.
-6. Sube el archivo descargado de envíoRH.
-7. SUNAT te mostrará los recibos importados. Revisa que todo cuadre.
-8. Si todo bien → **Presentar declaración** → SUNAT te da una constancia con número de orden.
+1. Dentro del lote, click en **Exportar Excel masivo** (botón ámbar, arriba).
+2. Se descarga un archivo `recibos_emision_LOTE-XXX_....xlsx`.
+3. El Excel trae columnas en este orden listo para copiar/pegar a SOL:
 
-**Antes de presentar revisa:**
+   | Columna | Uso |
+   |---|---|
+   | Fecha emisión | fecha del recibo |
+   | Tipo doc cliente | DNI o RUC |
+   | N° documento cliente | ID del cliente |
+   | Nombre / Razón social | nombre completo |
+   | Descripción del servicio | concepto |
+   | Moneda | PEN o USD |
+   | Monto bruto | antes de retención |
+   | ¿Retención 8%? | SÍ / NO |
+   | Monto retención | calculado |
+   | Monto neto | lo que cobra |
+   | N° recibo SUNAT | lo llenas después |
 
-- Todos los RUC/DNI tengan 11 u 8 dígitos.
-- Los montos coincidan con los recibos reales.
-- La retención del 8% solo aparezca cuando un emisor ya pasó los S/ 1,500 acumulados en el mes.
+4. Fila final con totales. Encabezado congelado.
+
+### 4.2 — Emitir cada recibo en SOL
+
+1. Entra a https://www.sunat.gob.pe/ con tu Clave SOL (RUC `10461249847`, usuario `ALONSOCD`).
+2. Menú **Empresas → Comprobantes de Pago → Recibos por Honorarios → Emitir RHE**.
+3. Por cada fila del Excel:
+   - Copiar cliente (tipo doc, número, nombre).
+   - Copiar descripción y monto.
+   - Emitir. SOL te devuelve un número (ej. `E001-123`).
+   - **Copia ese número y pégalo en la columna "N° recibo SUNAT" del Excel**, o vuelve al sistema y presiona **EMITIDO** en la fila del recibo e ingresa el número.
+
+### 4.3 — Registrar en el sistema que el recibo ya fue emitido
+
+Dos opciones:
+
+- **Una por una desde el sistema:** en el lote, al costado de cada recibo hay un botón **EMITIDO**. Clic → escribes `E001-123` → guardar. El recibo cambia a estado "emitido".
+- **Por lote (futuro):** si el ingeniero aprueba la Fase 2 con certificado digital, el sistema emite automáticamente los 200 contra SUNAT en un click.
 
 ---
 
@@ -118,7 +140,8 @@ SUNAT **no tiene ambiente de pruebas** para Recibos por Honorarios. Se prueba di
 3. Crea un lote del mes
 4. Importa recibos por Excel
 5. Mira los reportes
-6. Genera archivo SUNAT y súbelo a tu Clave SOL real
+6. **Exporta Excel masivo** del lote → lo usas como checklist para emitir uno por uno en SOL
+7. Por cada recibo emitido, marca **EMITIDO** en el sistema e ingresa el N° que asignó SUNAT
 
 ---
 

@@ -31,13 +31,16 @@
             @if($lote->recibos->count() > 0 && in_array($lote->estado, ['pendiente', 'generado']))
                 <form method="POST" action="{{ route('lotes.generar-archivo', $lote->id) }}">
                     @csrf
-                    <button type="submit" class="btn-amber">Generar archivo SUNAT</button>
+                    <button type="submit" class="btn-amber">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Exportar Excel masivo
+                    </button>
                 </form>
             @endif
             @if($lote->archivo_generado)
                 <a href="{{ route('lotes.descargar', $lote->id) }}" class="btn-primary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-                    Descargar
+                    Descargar último Excel
                 </a>
             @endif
         </div>
@@ -105,14 +108,33 @@
                             <td>
                                 <span class="badge {{ $recibo->estado === 'emitido' ? 'badge-forest' : 'badge-gold' }}">{{ $recibo->estado }}</span>
                             </td>
-                            <td class="text-right text-xs space-x-3">
+                            <td class="text-right text-xs space-x-3" x-data="{ open: false, num: '{{ $recibo->numero_recibo_sunat ?? '' }}' }">
                                 @if($recibo->estado !== 'emitido')
+                                    <button type="button" @click="open = true" class="text-forest-ink hover:text-ink uppercase tracking-wider">Emitido</button>
                                     <a href="{{ route('recibos.edit', $recibo->id) }}" class="text-ink hover:text-amber-ink uppercase tracking-wider">Editar</a>
                                     <form method="POST" action="{{ route('recibos.destroy', $recibo->id) }}" class="inline" onsubmit="return confirm('¿Eliminar recibo?')">
                                         @csrf @method('DELETE')
                                         <button class="text-clay-ink hover:text-ink uppercase tracking-wider">Borrar</button>
                                     </form>
+                                @else
+                                    <span class="text-ink-4 font-mono-num normal-case">{{ $recibo->numero_recibo_sunat }}</span>
                                 @endif
+
+                                <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="open = false">
+                                    <form method="POST" action="{{ route('recibos.emitido', $recibo->id) }}" class="bg-paper max-w-md w-full mx-4 p-6 rounded-sm shadow-xl">
+                                        @csrf
+                                        <h3 class="font-display text-xl font-semibold text-ink mb-1 text-left">Marcar como emitido</h3>
+                                        <p class="text-xs text-ink-3 mb-4 text-left">Ingresa el número de recibo que asignó SUNAT tras emitirlo en SOL (ej. E001-123).</p>
+                                        <label class="block text-left text-[11px] uppercase tracking-[0.14em] text-ink-3 mb-1">N° recibo SUNAT</label>
+                                        <input type="text" name="numero_recibo_sunat" x-model="num" required maxlength="50"
+                                               class="w-full px-3 py-2 border border-rule-strong text-sm font-mono-num focus:outline-none focus:border-amber-ink"
+                                               placeholder="E001-123">
+                                        <div class="flex gap-2 justify-end mt-5">
+                                            <button type="button" @click="open = false" class="btn-secondary text-xs">Cancelar</button>
+                                            <button type="submit" class="btn-primary text-xs">Guardar</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         @endforeach

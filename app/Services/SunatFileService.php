@@ -78,57 +78,129 @@ class SunatFileService
     }
 
     /**
-     * Generar archivo Excel (alternativa)
+     * Generar Excel masivo de recibos del lote, listo para emisión en SUNAT SOL
      */
     public function generarArchivoExcel(LoteEmision $lote): string
     {
-        $recibos = $lote->recibos()->where('estado', '!=', 'anulado')->get();
+        $recibos = $lote->recibos()->with('cliente')
+            ->where('estado', '!=', 'anulado')
+            ->orderBy('fecha_emision')
+            ->orderBy('id')
+            ->get();
 
         if ($recibos->isEmpty()) {
-            throw new \Exception('El lote no tiene recibos para generar el archivo');
+            throw new \Exception('El lote no tiene recibos para exportar');
         }
 
-        $nombreArchivo = str_replace('.txt', '.xlsx', $this->generarNombreArchivo($lote));
+        $nombreArchivo = sprintf(
+            'recibos_emision_%s_%s.xlsx',
+            $lote->codigo_lote,
+            now()->format('YmdHis')
+        );
         $ruta = 'exports/sunat/' . $nombreArchivo;
 
-        // Crear array de datos
-        $datos = [];
-        foreach ($recibos as $recibo) {
-            $datos[] = [
-                'Tipo Doc Receptor' => $recibo->cliente->tipo_documento,
-                'Número Doc Receptor' => $recibo->cliente->numero_documento,
-                'Descripción Servicio' => $recibo->descripcion_servicio,
-                'Monto' => $recibo->monto_bruto,
-                'Fecha Emisión' => $recibo->fecha_emision->format('Y-m-d'),
-                'Fecha Vencimiento' => $recibo->fecha_vencimiento ? $recibo->fecha_vencimiento->format('Y-m-d') : '',
-            ];
-        }
-
-        // Usar PhpSpreadsheet directamente
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Recibos ' . $lote->codigo_lote);
 
         // Encabezados
-        $sheet->fromArray([
-            ['Tipo Doc Receptor', 'Número Doc Receptor', 'Descripción Servicio', 'Monto', 'Fecha Emisión', 'Fecha Vencimiento']
-        ], null, 'A1');
+        $encabezados = [
+            '#',
+            'Fecha emisión',
+            'Tipo doc cliente',
+            'N° documento cliente',
+            'Nombre / Razón social',
+            'Descripción del servicio',
+            'Moneda',
+            'Monto bruto',
+            '¿Retención 8%?',
+            'Monto retención',
+            'Monto neto',
+            'N° recibo SUNAT',
+            'Estado',
+        ];
+        $sheet->fromArray([$encabezados], null, 'A1');
 
         // Datos
-        $sheet->fromArray($datos, null, 'A2');
+        $fila = 2;
+        foreach ($recibos as $i => $recibo) {
+            $sheet->fromArray([[
+                $i + 1,
+                \Carbon\Carbon::parse($recibo->fecha_emision)->format('d/m/Y'),
+                $recibo->cliente->tipo_documento,
+                $recibo->cliente->numero_documento,
+                $recibo->cliente->nombre_razon_social,
+                $recibo->descripcion_servicio,
+                $recibo->moneda,
+                number_format($recibo->monto_bruto, 2, '.', ''),
+                $recibo->aplica_retencion ? 'SÍ' : 'NO',
+                number_format($recibo->monto_retencion, 2, '.', ''),
+                number_format($recibo->monto_neto, 2, '.', ''),
+                $recibo->numero_recibo_sunat ?? '',
+                strtoupper($recibo->estado),
+            ]], null, 'A' . $fila);
+            $fila++;
+        }
 
-        // Guardar
+        // Estilo encabezado
+        $sheet->getStyle('A1:M1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '6B3410'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => '4A2409'],
+                ],
+            ],
+        ]);
+        $sheet->getRowDimension(1)->setRowHeight(38);
+
+        // Fila totales
+        $totalRow = $fila;
+        $sheet->setCellValue('A' . $totalRow, 'TOTAL');
+        $sheet->mergeCells('A' . $totalRow . ':G' . $totalRow);
+        $sheet->setCellValue('H' . $totalRow, '=SUM(H2:H' . ($totalRow - 1) . ')');
+        $sheet->setCellValue('J' . $totalRow, '=SUM(J2:J' . ($totalRow - 1) . ')');
+        $sheet->setCellValue('K' . $totalRow, '=SUM(K2:K' . ($totalRow - 1) . ')');
+        $sheet->getStyle('A' . $totalRow . ':M' . $totalRow)->applyFromArray([
+            'font' => ['bold' => true, 'size' => 11],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FBF5EC'],
+            ],
+            'borders' => [
+                'top' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM],
+            ],
+        ]);
+        $sheet->getStyle('A' . $totalRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+        $sheet->getStyle('H2:K' . $totalRow)->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('H2:K' . $totalRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+
+        // Congelar encabezado y ajustar anchos
+        $sheet->freezePane('A2');
+        foreach (range('A', 'M') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Guardar archivo
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $tempFile = storage_path('app/' . $ruta);
-        
-        // Crear directorio si no existe
+        $tempFile = \Storage::disk('local')->path($ruta);
+
         $dir = dirname($tempFile);
         if (!file_exists($dir)) {
             mkdir($dir, 0755, true);
         }
-        
+
         $writer->save($tempFile);
 
-        // Actualizar lote
         $lote->update([
             'archivo_generado' => $nombreArchivo,
             'archivo_ruta' => $ruta,

@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('recibos/{id}/edit', [ReciboController::class, 'edit'])->name('recibos.edit');
     Route::put('recibos/{id}', [ReciboController::class, 'update'])->name('recibos.update');
     Route::delete('recibos/{id}', [ReciboController::class, 'destroy'])->name('recibos.destroy');
+    Route::post('recibos/{id}/emitido', [ReciboController::class, 'marcarEmitido'])->name('recibos.emitido');
     Route::post('recibos/calcular-retencion', [ReciboController::class, 'calcularRetencion'])->name('recibos.calcular-retencion');
 
     // Rutas de clientes
