@@ -3,34 +3,37 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\LoteEmision;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class RolesSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'admin@enviorh.local'],
+        $admin = User::updateOrCreate(
+            ['email' => 'ing@enviorh.com'],
             [
-                'name' => 'Administrador (Ing)',
-                'password' => Hash::make('admin123'),
+                'name' => 'Ingeniero (Magus)',
+                'password' => Hash::make('password'),
                 'rol' => 'admin',
                 'email_verified_at' => now(),
             ]
         );
 
-        User::updateOrCreate(
-            ['email' => 'cliente@enviorh.local'],
+        $cliente = User::updateOrCreate(
+            ['email' => 'cliente@enviorh.com'],
             [
                 'name' => 'Cliente RHE',
-                'password' => Hash::make('cliente123'),
+                'password' => Hash::make('password'),
                 'rol' => 'cliente',
                 'email_verified_at' => now(),
             ]
         );
 
-        User::where('email', 'admin@example.com')->update(['rol' => 'admin']);
-        User::where('email', 'usuario@example.com')->update(['rol' => 'cliente']);
+        LoteEmision::whereNull('user_id')->update(['user_id' => $cliente->id]);
+
+        User::whereNotIn('email', ['ing@enviorh.com', 'cliente@enviorh.com'])->delete();
     }
 }
