@@ -25,7 +25,10 @@ class LoteController extends Controller
     {
         $query = LoteEmision::query();
 
-        // Filtros
+        if (auth()->user() && auth()->user()->esCliente()) {
+            $query->where('user_id', auth()->id());
+        }
+
         if ($request->has('estado')) {
             $query->where('estado', $request->estado);
         }
@@ -38,6 +41,33 @@ class LoteController extends Controller
         $lotes = $query->orderBy('created_at', 'desc')->paginate(20);
 
         return view('lotes.index', compact('lotes'));
+    }
+
+    public function enviarASunat(int $id)
+    {
+        $lote = LoteEmision::findOrFail($id);
+
+        if (auth()->user()->esCliente() && $lote->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $count = Recibo::where('lote_id', $id)
+            ->whereIn('estado', ['pendiente', 'validado', 'generado'])
+            ->update(['estado' => 'en_cola']);
+
+        if ($count === 0) {
+            return back()->with('error', 'No hay recibos pendientes para enviar.');
+        }
+
+        HistorialEmision::create([
+            'lote_id' => $id,
+            'accion' => 'enviado_a_procesamiento',
+            'descripcion' => "{$count} recibo(s) enviado(s) a procesamiento SUNAT",
+        ]);
+
+        $lote->update(['estado' => 'subido_sunat', 'fecha_subida' => now()]);
+
+        return back()->with('success', "Se enviaron {$count} recibo(s) a SUNAT. Serán procesados en breve.");
     }
 
     /**
@@ -68,6 +98,8 @@ class LoteController extends Controller
             'periodo_anio' => $validated['periodo_anio'],
             'descripcion' => $validated['descripcion'],
             'estado' => 'pendiente',
+            'user_id' => auth()->id(),
+            'creado_por' => auth()->id(),
         ]);
 
         // Registrar en historial
@@ -87,6 +119,11 @@ class LoteController extends Controller
     public function show(int $id)
     {
         $lote = LoteEmision::with(['recibos.cliente', 'historial'])->findOrFail($id);
+
+        if (auth()->user() && auth()->user()->esCliente() && $lote->user_id && $lote->user_id !== auth()->id()) {
+            abort(403);
+        }
+
         $recibos = $lote->recibos()->paginate(20);
 
         return view('lotes.show', compact('lote', 'recibos'));

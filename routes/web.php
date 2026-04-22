@@ -6,6 +6,7 @@ use App\Http\Controllers\ReciboController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ImportacionController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\Admin\ProcesamientoController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,6 +28,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('lotes', LoteController::class);
     Route::post('lotes/{id}/generar-archivo', [LoteController::class, 'generarArchivo'])->name('lotes.generar-archivo');
     Route::get('lotes/{id}/descargar', [LoteController::class, 'descargarArchivo'])->name('lotes.descargar');
+    Route::post('lotes/{id}/enviar-sunat', [LoteController::class, 'enviarASunat'])->name('lotes.enviar-sunat');
+
+    // Descarga PDF procesado (cliente o admin)
+    Route::get('recibos/{id}/pdf', [ProcesamientoController::class, 'descargarPdf'])->name('recibos.pdf');
 
     // Rutas de recibos
     Route::get('lotes/{lote_id}/recibos/create', [ReciboController::class, 'create'])->name('recibos.create');
@@ -51,6 +56,12 @@ Route::middleware('auth')->group(function () {
     Route::get('reportes/retenciones', [ReporteController::class, 'retenciones'])->name('reportes.retenciones');
     Route::get('reportes/resumen-lotes', [ReporteController::class, 'resumenLotes'])->name('reportes.resumen-lotes');
     Route::get('reportes/exportar', [ReporteController::class, 'exportarExcel'])->name('reportes.exportar');
+
+    // Panel admin (ingeniero)
+    Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
+        Route::get('procesamiento', [ProcesamientoController::class, 'index'])->name('procesamiento.index');
+        Route::post('procesamiento/{id}/procesar', [ProcesamientoController::class, 'procesar'])->name('procesamiento.procesar');
+    });
 });
 
 require __DIR__.'/auth.php';

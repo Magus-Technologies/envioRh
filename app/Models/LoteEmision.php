@@ -24,6 +24,7 @@ class LoteEmision extends Model
         'fecha_subida',
         'fecha_emision',
         'creado_por',
+        'user_id',
     ];
 
     protected $casts = [
@@ -54,6 +55,11 @@ class LoteEmision extends Model
     public function archivosImportados()
     {
         return $this->hasMany(ArchivoImportado::class, 'lote_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     // Scope para estado

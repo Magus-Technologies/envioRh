@@ -29,6 +29,9 @@
                         ['name' => 'Clientes', 'route' => 'clientes.index', 'active' => 'clientes.*'],
                         ['name' => 'Reportes', 'route' => 'reportes.plame', 'active' => 'reportes.*'],
                     ];
+                    if (auth()->check() && auth()->user()->esAdmin()) {
+                        $navItems[] = ['name' => 'Procesamiento', 'route' => 'admin.procesamiento.index', 'active' => 'admin.*'];
+                    }
                 @endphp
                 @foreach($navItems as $item)
                     @php $isActive = request()->routeIs($item['active']); @endphp

@@ -13,7 +13,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end mb-10 pb-6 border-b-2 border-ink">
         <div class="lg:col-span-7">
-            @php $b = ['emitido' => 'badge-forest', 'generado' => 'badge-amber', 'pendiente' => 'badge-gold'][$lote->estado] ?? 'badge-ink'; @endphp
+            @php $b = ['emitido' => 'badge-forest', 'generado' => 'badge-amber', 'pendiente' => 'badge-gold', 'subido_sunat' => 'badge-amber'][$lote->estado] ?? 'badge-ink'; @endphp
             <div class="flex items-center gap-3">
                 <span class="badge {{ $b }}">{{ $lote->estado }}</span>
                 <span class="font-mono-num text-xs text-ink-4">{{ str_pad($lote->periodo_mes, 2, '0', STR_PAD_LEFT) }}/{{ $lote->periodo_anio }}</span>
@@ -21,7 +21,10 @@
             <h1 class="font-display text-5xl font-semibold text-ink mt-3 leading-none font-mono-num">{{ $lote->codigo_lote }}</h1>
             <p class="mt-3 text-ink-3">{{ $lote->descripcion ?: 'Sin descripción' }}</p>
         </div>
-        <div class="lg:col-span-5 flex lg:justify-end flex-wrap gap-2">
+        @php
+            $pendientesCount = $lote->recibos->whereIn('estado', ['pendiente', 'validado', 'generado'])->count();
+        @endphp
+        <div class="lg:col-span-5 flex lg:justify-end flex-wrap gap-2" x-data="{ sending: false }">
             @if(in_array($lote->estado, ['pendiente', 'generado']))
                 <a href="{{ route('recibos.create', $lote->id) }}" class="btn-primary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -34,21 +37,42 @@
                     Importar
                 </a>
             @endif
+            @if($pendientesCount > 0)
+                <form method="POST" action="{{ route('lotes.enviar-sunat', $lote->id) }}" @submit="sending = true">
+                    @csrf
+                    <button type="submit" class="btn-amber" :disabled="sending">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Enviar a SUNAT ({{ $pendientesCount }})
+                    </button>
+                </form>
+            @endif
             @if($lote->recibos->count() > 0 && in_array($lote->estado, ['pendiente', 'generado']))
                 <form method="POST" action="{{ route('lotes.generar-archivo', $lote->id) }}">
                     @csrf
-                    <button type="submit" class="btn-amber">
+                    <button type="submit" class="btn-secondary">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Exportar Excel masivo
+                        Exportar Excel
                     </button>
                 </form>
             @endif
             @if($lote->archivo_generado)
-                <a href="{{ route('lotes.descargar', $lote->id) }}" class="btn-primary">
+                <a href="{{ route('lotes.descargar', $lote->id) }}" class="btn-secondary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
                     Descargar último Excel
                 </a>
             @endif
+
+            <div x-show="sending" x-cloak x-transition class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
+                <div class="bg-paper max-w-md w-full mx-4 p-8 rounded-sm shadow-xl text-center">
+                    <svg class="w-10 h-10 mx-auto text-amber-ink animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" stroke-width="2.5" opacity="0.25"/>
+                        <path stroke-linecap="round" stroke-width="2.5" d="M21 12a9 9 0 0 0-9-9"/>
+                    </svg>
+                    <h3 class="font-display text-2xl font-semibold text-ink mt-4">Enviando a SUNAT</h3>
+                    <p class="text-sm text-ink-3 mt-2">Procesando <span class="font-mono-num text-ink">{{ $pendientesCount }}</span> recibo(s). Esto puede tardar unos minutos.</p>
+                    <p class="text-xs text-ink-4 mt-3">Puede cerrar esta ventana. Los recibos se procesarán internamente.</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -112,18 +136,33 @@
                             <td class="text-right font-mono-num text-clay-ink">{{ number_format($recibo->monto_retencion, 2) }}</td>
                             <td class="text-right font-mono-num font-semibold text-forest-ink">{{ number_format($recibo->monto_neto, 2) }}</td>
                             <td>
-                                <span class="badge {{ $recibo->estado === 'emitido' ? 'badge-forest' : 'badge-gold' }}">{{ $recibo->estado }}</span>
+                                @php
+                                    $bs = [
+                                        'emitido' => 'badge-forest',
+                                        'en_cola' => 'badge-amber',
+                                        'pendiente' => 'badge-gold',
+                                    ][$recibo->estado] ?? 'badge-ink';
+                                    $label = $recibo->estado === 'en_cola' ? 'procesando' : $recibo->estado;
+                                @endphp
+                                <span class="badge {{ $bs }}">{{ $label }}</span>
                             </td>
                             <td class="text-right text-xs space-x-3" x-data="{ open: false, num: '{{ $recibo->numero_recibo_sunat ?? '' }}' }">
-                                @if($recibo->estado !== 'emitido')
-                                    <button type="button" @click="open = true" class="text-forest-ink hover:text-ink uppercase tracking-wider">Emitido</button>
+                                @if($recibo->estado === 'emitido' && $recibo->archivo_pdf)
+                                    <a href="{{ route('recibos.pdf', $recibo->id) }}" class="text-forest-ink hover:text-ink uppercase tracking-wider" target="_blank">Descargar PDF</a>
+                                    <span class="text-ink-4 font-mono-num normal-case">{{ $recibo->numero_recibo_sunat }}</span>
+                                @elseif($recibo->estado === 'emitido')
+                                    <span class="text-ink-4 font-mono-num normal-case">{{ $recibo->numero_recibo_sunat }}</span>
+                                @elseif($recibo->estado === 'en_cola')
+                                    <span class="text-amber-ink uppercase tracking-wider">Procesando...</span>
+                                @else
+                                    @if(auth()->user()->esAdmin())
+                                        <button type="button" @click="open = true" class="text-forest-ink hover:text-ink uppercase tracking-wider">Emitido</button>
+                                    @endif
                                     <a href="{{ route('recibos.edit', $recibo->id) }}" class="text-ink hover:text-amber-ink uppercase tracking-wider">Editar</a>
                                     <form method="POST" action="{{ route('recibos.destroy', $recibo->id) }}" class="inline" onsubmit="return confirm('¿Eliminar recibo?')">
                                         @csrf @method('DELETE')
                                         <button class="text-clay-ink hover:text-ink uppercase tracking-wider">Borrar</button>
                                     </form>
-                                @else
-                                    <span class="text-ink-4 font-mono-num normal-case">{{ $recibo->numero_recibo_sunat }}</span>
                                 @endif
 
                                 <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="open = false">

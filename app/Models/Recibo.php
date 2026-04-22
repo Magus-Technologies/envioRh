@@ -25,6 +25,8 @@ class Recibo extends Model
         'moneda',
         'numero_continuacion',
         'numero_recibo_sunat',
+        'archivo_pdf',
+        'fecha_procesado',
         'estado',
         'observaciones',
     ];
@@ -32,6 +34,7 @@ class Recibo extends Model
     protected $casts = [
         'fecha_emision' => 'date',
         'fecha_vencimiento' => 'date',
+        'fecha_procesado' => 'datetime',
         'monto_bruto' => 'decimal:2',
         'monto_retencion' => 'decimal:2',
         'monto_neto' => 'decimal:2',
