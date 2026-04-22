@@ -23,28 +23,12 @@
             </div>
 
             <div class="relative z-10 max-w-md">
-                <h1 class="font-display text-5xl lg:text-6xl font-semibold leading-[1.05]">
-                    Emite tus recibos <span class="italic" style="color: var(--amber);">por honorarios</span> sin salir de casa.
+                <h1 class="font-display text-5xl lg:text-6xl font-semibold leading-[1.05]" style="color: #faf8f3;">
+                    Emite tus recibos <span class="italic" style="color: var(--amber);">por honorarios</span>.
                 </h1>
-                <p class="mt-6 text-base text-[color:var(--ink-4)] leading-relaxed">
-                    Genera archivos PLAME, calcula retenciones del 8% y mantén tu cartera de clientes al día. Diseñado para contadores y profesionales independientes.
-                </p>
             </div>
 
-            <div class="relative z-10 grid grid-cols-3 gap-6 pt-8 border-t" style="border-color: rgba(255,255,255,0.08);">
-                <div>
-                    <div class="font-mono-num text-3xl font-light">08<span class="text-base">%</span></div>
-                    <div class="text-[10px] uppercase tracking-wider text-[color:var(--ink-4)] mt-1">Retención</div>
-                </div>
-                <div>
-                    <div class="font-mono-num text-3xl font-light">1,500</div>
-                    <div class="text-[10px] uppercase tracking-wider text-[color:var(--ink-4)] mt-1">Tope mensual</div>
-                </div>
-                <div>
-                    <div class="font-mono-num text-3xl font-light">PLAME</div>
-                    <div class="text-[10px] uppercase tracking-wider text-[color:var(--ink-4)] mt-1">Formato</div>
-                </div>
-            </div>
+            <div></div>
         </aside>
 
         <main class="flex items-center justify-center p-8 lg:p-16 bg-paper relative">
@@ -55,11 +39,6 @@
 
             <div class="w-full max-w-md fade-up">
                 {{ $slot }}
-            </div>
-
-            <div class="absolute bottom-8 left-8 right-8 flex justify-between items-center text-[11px] text-ink-4">
-                <span class="font-mono-num">© {{ date('Y') }} envíoRH</span>
-                <span>v1.0.0</span>
             </div>
         </main>
     </div>

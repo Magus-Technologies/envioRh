@@ -21,8 +21,12 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         <div class="lg:col-span-8 fade-up fade-up-1">
             <p class="kicker">Panel de control · {{ now()->isoFormat('MMMM Y') }}</p>
+            @php
+                $h = now()->hour;
+                $saludo = $h < 12 ? 'Buenos días' : ($h < 19 ? 'Buenas tardes' : 'Buenas noches');
+            @endphp
             <h1 class="font-display text-5xl lg:text-6xl font-semibold text-ink mt-3 leading-[1.05]">
-                Buen {{ now()->hour < 12 ? 'día' : (now()->hour < 19 ? 'tarde' : 'noche') }},<br>
+                {{ $saludo }},<br>
                 <span class="italic text-amber-ink">{{ explode(' ', Auth::user()->name)[0] }}</span>.
             </h1>
             <p class="mt-4 text-ink-3 max-w-xl">Este es el resumen de tu operación hasta hoy {{ now()->isoFormat('D [de] MMMM') }}. Todo lo importante, en una sola página.</p>
@@ -111,7 +115,7 @@
                 <div class="flex items-baseline justify-between mb-4 pb-3 border-b-2 border-ink">
                     <h2 class="font-display text-2xl font-semibold text-ink">Acciones</h2>
                 </div>
-                <div class="grid grid-cols-2 gap-px bg-[color:var(--rule)] border rule">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-px bg-[color:var(--rule)] border rule">
                     <a href="{{ route('lotes.create') }}" class="bg-surface p-5 hover:bg-paper-2 transition group">
                         <div class="kicker !text-ink-4 group-hover:!text-amber-ink">01</div>
                         <div class="font-display text-lg text-ink mt-1">Nuevo lote</div>
@@ -126,11 +130,6 @@
                         <div class="kicker !text-ink-4 group-hover:!text-amber-ink">03</div>
                         <div class="font-display text-lg text-ink mt-1">Plantilla</div>
                         <div class="text-xs text-ink-3 mt-1">Descargar Excel</div>
-                    </a>
-                    <a href="{{ route('reportes.plame') }}" class="bg-surface p-5 hover:bg-paper-2 transition group">
-                        <div class="kicker !text-ink-4 group-hover:!text-amber-ink">04</div>
-                        <div class="font-display text-lg text-ink mt-1">Reporte PLAME</div>
-                        <div class="text-xs text-ink-3 mt-1">Generar</div>
                     </a>
                 </div>
             </div>
